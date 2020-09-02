@@ -28,6 +28,7 @@
 //#include "AppDefinition.h"
 
 extern int m_SetPoint_2;
+extern int m_SetPoint_1;
 // Definicion de pines
 // LED PB7 (prueba)
 
@@ -161,17 +162,16 @@ void Task_Control(void)
     Motor2_Write_Command(DRIVER_CONTROL_OFF);
 
 	// Inicializa Periferico
-	//Motor1_Initialize();
+	Motor1_Initialize();
 	Motor2_Initialize();
 	
 	// Establece posicion actual como punto de referencia
-	//Motor1_SetAsOrigen();
-    //GPIO_PIN_SetState(IO_LED_PORT, IO_LED_PIN, 1);
+	Motor1_SetAsOrigen();
 	Motor2_SetAsOrigen();
-    //GPIO_PIN_SetState(IO_LED_PORT, IO_LED_PIN, 0);
+
     //Electric_Valves_Initialize();
     
-    //Motor1_Write_Command(DRIVER_CONTROL_ON);
+    Motor1_Write_Command(DRIVER_CONTROL_ON);
     Motor2_Write_Command(DRIVER_CONTROL_ON);
 
 	vButtonCurState = GPIO_PIN_ReadState(IO_BUTTON_PORT, IO_BUTTON_PIN);
@@ -363,9 +363,8 @@ void Task_SensorDisplay(void){
     Kalman_init(&myFILTER);
 
     while(1){
-        //display_posicion = posicion_actual_insp;
-        display_posicion = posicion_actual_exp;
-        presion_entero = (int32_t)(presion * 100.00);
+        display_posicion = posicion_actual_insp;
+        //display_posicion = posicion_actual_exp;        presion_entero = (int32_t)(presion * 100.00);
         //sprintf(buffer_sensores, "presion = %d\n\r", presion_entero);
        // UART3_SendString((uint8_t *)buffer_sensores); while(UART3_TxLevel() > 0) osDelay(1); osDelay(1);
         flujo_entero = (int32_t)(flujo * 100);
@@ -384,7 +383,7 @@ void Task_SensorDisplay(void){
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), flujo_entero,cambio_flujo);
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), presion_entero,cambio_presion);
         //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(setpoint_recibido), display_posicion - 32700);
-        sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(m_SetPoint_2), display_posicion);
+        sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(m_SetPoint_1), display_posicion);
         //sprintf(buffer_sensores, "%d\r\n", flujo_entero);
         //sprintf(buffer_sensores, "%d,%d,%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), flujo_entero, m_SetPoint_1 * 10,
        //                  vEncoder,
@@ -527,7 +526,7 @@ void Task_Pruebita(void){
             //Inspiration_Needle_Valve_Go_To_Setpoint();
             //Expiration_Ball_Valve_Write_Step_Setpoint(setpoint_recibido);
             //Expiration_Ball_Valve_Go_To_Setpoint();
-            Motor2_Write_Setpoint((int16_t)setpoint_recibido);
+            Motor1_Write_Setpoint((int16_t)setpoint_recibido);
             system_flags &= ~(1 << COMMAND_RECEIVED_DATA_FLAG);
        }
         

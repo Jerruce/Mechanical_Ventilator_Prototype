@@ -133,6 +133,9 @@
 #define EXPIRATION_BALL_VALVE_CLOSE_STEPS_LIMIT       3600//1200//360
 #define EXPIRATION_BALL_VALVE_CLOSE_GUARD_LIMIT       10
 
+#define INSPIRATION_NEEDLE_VALVE_SPEED_SWITCH_THRESHOLD   50  
+#define EXPIRATION_BALL_VALVE_SPEED_SWITCH_THRESHOLD      50
+  
 
 // ----------------------- Defines for digital filters -------------------------
 
