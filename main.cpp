@@ -27,7 +27,7 @@
 
 //#include "AppDefinition.h"
 
-
+extern int m_SetPoint_2;
 // Definicion de pines
 // LED PB7 (prueba)
 
@@ -155,34 +155,32 @@ void Task_Control(void)
 	Mapeado();
 	IO_Initialize();
 	
-	Motor1_Write_Setpoint(0);
+    Motor1_Write_Setpoint(0);
     Motor2_Write_Setpoint(0);
     Motor1_Write_Command(DRIVER_CONTROL_OFF);
     Motor2_Write_Command(DRIVER_CONTROL_OFF);
 
 	// Inicializa Periferico
 	//Motor1_Initialize();
-	//Motor2_Initialize();
+	Motor2_Initialize();
 	
 	// Establece posicion actual como punto de referencia
 	//Motor1_SetAsOrigen();
-	//Motor2_SetAsOrigen();
-
+    //GPIO_PIN_SetState(IO_LED_PORT, IO_LED_PIN, 1);
+	Motor2_SetAsOrigen();
+    //GPIO_PIN_SetState(IO_LED_PORT, IO_LED_PIN, 0);
     //Electric_Valves_Initialize();
     
-    Inspiration_Needle_Valve_Initialize();
-    Expiration_Ball_Valve_Initialize();
-
-    Motor1_Write_Command(DRIVER_CONTROL_ON);
+    //Motor1_Write_Command(DRIVER_CONTROL_ON);
     Motor2_Write_Command(DRIVER_CONTROL_ON);
-	
+
 	vButtonCurState = GPIO_PIN_ReadState(IO_BUTTON_PORT, IO_BUTTON_PIN);
 	vButtonLastState = vButtonCurState;
 	vKeyState = 0;
 
 	while (1)
 	{
-		LED_State(2);
+		//LED_State(2);
 		
 		vButtonCurState = GPIO_PIN_ReadState(IO_BUTTON_PORT, IO_BUTTON_PIN);
 		
@@ -386,7 +384,7 @@ void Task_SensorDisplay(void){
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), flujo_entero,cambio_flujo);
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), presion_entero,cambio_presion);
         //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(setpoint_recibido), display_posicion - 32700);
-        sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(setpoint_recibido), display_posicion - 32756);
+        sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(m_SetPoint_2), display_posicion);
         //sprintf(buffer_sensores, "%d\r\n", flujo_entero);
         //sprintf(buffer_sensores, "%d,%d,%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), flujo_entero, m_SetPoint_1 * 10,
        //                  vEncoder,
@@ -504,9 +502,7 @@ void Task_Flag_Manager(void){
 
 
 void Task_Pruebita(void){
-    Breath_System_Initialize();
-    //insp_needle_valve_pulse.period(INSPIRATION_NEEDLE_VALVE_PULSE_PERIOD_S);
-    //insp_needle_valve_pulse.write(INSPIRATION_NEEDLE_VALVE_PULSE_DUTY_CYCLE);
+    //Breath_System_Initialize();
     //Inspiration_Needle_Valve_Go_Home();
     //Inspiration_Needle_Valve_Initialize();
     //Inspiration_Needle_Valve_Go_Home();
@@ -529,8 +525,9 @@ void Task_Pruebita(void){
             //PIP_Setpoint_Update((uint8_t)setpoint_recibido);
             //Inspiration_Needle_Valve_Write_Step_Setpoint(setpoint_recibido);
             //Inspiration_Needle_Valve_Go_To_Setpoint();
-            Expiration_Ball_Valve_Write_Step_Setpoint(setpoint_recibido);
-            Expiration_Ball_Valve_Go_To_Setpoint();
+            //Expiration_Ball_Valve_Write_Step_Setpoint(setpoint_recibido);
+            //Expiration_Ball_Valve_Go_To_Setpoint();
+            Motor2_Write_Setpoint((int16_t)setpoint_recibido);
             system_flags &= ~(1 << COMMAND_RECEIVED_DATA_FLAG);
        }
         
