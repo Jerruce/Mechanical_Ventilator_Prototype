@@ -42,7 +42,7 @@ void Flow_Fuzzy_Linear_PD_Controller(double error, double error_change, double *
 float Flow_Fuzzy_Incremental_Controller(float control_setpoint, float control_feedback, uint8_t control_reset){
 
     static double error[2];
-    static double fuzzy_error;
+    double fuzzy_error;
     double error_change, fuzzy_error_change;
     static double fuzzy_output[2] = {0.0, 0.0};
     static double controller_output = 0.0;

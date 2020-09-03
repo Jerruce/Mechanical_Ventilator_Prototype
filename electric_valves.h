@@ -22,14 +22,18 @@ void Inspiration_On_Off_Valve_Close(void);
 
 void Inspiration_Needle_Valve_Write_Step_Setpoint(uint16_t setpoint);
 void Inspiration_Needle_Valve_Go_To_Setpoint(void);
+void Inspiration_Needle_Valve_Go_Home(void);
 
 void Expiration_Ball_Valve_Write_Step_Setpoint(uint16_t setpoint);
 void Expiration_Ball_Valve_Go_To_Setpoint(void);
+void Expiration_Ball_Valve_Go_Home(void);
 
 void Inspiration_Needle_Valve_Enable(void);
 void Inspiration_Needle_Valve_Disable(void);
 
 void Expiration_Ball_Valve_Enable(void);
 void Expiration_Ball_Valve_Disable(void);
+
+
 
 #endif

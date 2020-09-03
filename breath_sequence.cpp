@@ -58,7 +58,8 @@ void Breath_System_Initialize(void){
     Tidal_Volume_Setpoint_Update(TIDAL_VOLUME_BY_DEFAULT_ML);
     PIP_Setpoint_Update(PIP_BY_DEFAULT_CM_H2O);
     PEEP_Setpoint_Update(PEEP_BY_DEFAULT_CM_H2O);
-    Time_And_Flow_Setpoint_Update();
+    Time_Setpoint_Update();
+    Flow_Setpoint_Update_From_Time();
     Flow_PID_Tune();
     PID_Controllers_Initialize();
     //Electric_Valves_Initialize();
@@ -135,14 +136,17 @@ void VC_CMV_State_Machine(void){
     /* The other actions depend on the breath phase */
 
     switch(breath_phase){
+
         case System_VC_CMV_Exp_To_Ins_Transition:
 
             if(ventilator_start_stop == 1){
+
                 // Update indicator values
                 volume_indicator_value = volume_peak_value;
                 flow_indicator_value = flow_peak_value;
                 pressure_indicator_value = pressure_peak_value;
-                // Check for volume error
+
+                // Clear the PIP error flag and check for volume error
                 system_flags &= ~(1 << PC_PIP_ERROR_FLAG);
                 if((volume_peak_value > (tidal_volume_setpoint_ml + VOLUME_PEAK_ALARM_TOLERANCE_ML)) || (volume_peak_value < (tidal_volume_setpoint_ml - VOLUME_PEAK_ALARM_TOLERANCE_ML))){
                     system_flags |= (1 << VC_VOLUME_ERROR_FLAG);
@@ -158,9 +162,12 @@ void VC_CMV_State_Machine(void){
                 // Update time and flow setpoint if required
                 if(system_flags & (1 << PARAMETER_MODIFIED_FLAG)){
                     
+                    // Resetpeak values
                     volume_peak_counter = 0;
                     volume_peak_average = 0;
-                    Time_And_Flow_Setpoint_Update();
+                    // Recalculate inspiration time, expiration time and flow setpoint 
+                    Time_Setpoint_Update();
+                    //Flow_Setpoint_Update_From_Time();    
                     //Flow_PID_Tune();
 
                     //__disable_irq();
@@ -170,13 +177,12 @@ void VC_CMV_State_Machine(void){
                 // Open inspiration solenoid valve
                 Inspiration_On_Off_Valve_Open();
                 // Close completely the expiration needle valve
-                Expiration_Ball_Valve_Write_Step_Setpoint(0);
-                Expiration_Ball_Valve_Go_To_Setpoint();
+                Expiration_Ball_Valve_Go_Home();
                 
                 
-                // Reset PID controllers
-                Inspiration_Flow_PID_Controller(0.0, 0.0, 1);
-                //Flow_Fuzzy_PD_Inc_Controller(0.0, 0.0, 1);
+                // Reset flow and PEEP controllers
+                //Inspiration_Flow_PID_Controller(0.0, 0.0, 1);
+                Flow_Fuzzy_Incremental_Controller(0.0, 0.0, 1);
                 PEEP_Fuzzy_Controller(0.0, 0.0, 1);
                 // Setup timer to count inspiration time
                 inspiration_timer.attach(&Inspiration_Finish, inspiration_time_setpoint_s);
@@ -194,10 +200,9 @@ void VC_CMV_State_Machine(void){
  
                  //current_flow_slpm = Get_Flow_PID_LPF_Output();
                 current_flow_slpm = flujo_pid;              
-                inspiration_valve_setpoint = Inspiration_Flow_PID_Controller(inspiration_flow_setpoint_slpm, current_flow_slpm, 0);
-                //inspiration_valve_setpoint = Flow_Fuzzy_PD_Controller(inspiration_flow_setpoint_slpm, current_flow_slpm, 0);
-                //inspiration_valve_setpoint = Flow_Fuzzy_PD_Inc_Controller(inspiration_flow_setpoint_slpm, current_flow_slpm, 0);
-                inspiration_valve_setpoint = Insp_Needle_Valve_Flow_Percent_To_Steps(inspiration_valve_setpoint);
+                //inspiration_valve_setpoint = Inspiration_Flow_PID_Controller(inspiration_flow_setpoint_slpm, current_flow_slpm, 0);
+                inspiration_valve_setpoint = Flow_Fuzzy_Incremental_Controller(inspiration_flow_setpoint_slpm, current_flow_slpm, 0);
+                //inspiration_valve_setpoint = Insp_Needle_Valve_Flow_Percent_To_Steps(inspiration_valve_setpoint);
                 //inspiration_valve_setpoint = Insp_Needle_Valve_Flow_Percent_To_Steps(0);
                 Inspiration_Needle_Valve_Write_Step_Setpoint((uint16_t)inspiration_valve_setpoint);
                 Inspiration_Needle_Valve_Go_To_Setpoint();
@@ -218,10 +223,12 @@ void VC_CMV_State_Machine(void){
             
             
        case System_VC_CMV_Ins_To_Exp_Transition:
+
             Inspiration_On_Off_Valve_Close();
 
-            Inspiration_Needle_Valve_Write_Step_Setpoint(0);
-            Inspiration_Needle_Valve_Go_To_Setpoint();
+            Inspiration_Needle_Valve_Go_Home();
+            //Inspiration_Needle_Valve_Write_Step_Setpoint(0);
+            //Inspiration_Needle_Valve_Go_To_Setpoint();
 
             expiration_timer.attach(&Expiration_Finish, expiration_time_setpoint_s);
             breath_phase = System_VC_CMV_Expiration; 
@@ -312,7 +319,7 @@ void PC_CMV_State_Machine(void){
                 Proximal_Flow_Sensor_Reset_Volume();
                 // Update time and flow setpoint if required
                 if(system_flags & (1 << PARAMETER_MODIFIED_FLAG)){
-                    Time_And_Flow_Setpoint_Update();
+                    Time_Setpoint_Update();
                     //PIP_PID_Tune();
 
                     //__disable_irq();
@@ -556,20 +563,44 @@ void Flow_Setpoint_Update(uint8_t flow_val){
 }     
     
 
-void Time_And_Flow_Setpoint_Update(void){
+
+void Time_Setpoint_Update(void){
 
     float resp_period;
 
+    if(resp_frequency_setpoint_rpm < 10.0){
+        resp_frequency_setpoint_rpm = 10.0;
+    }else if(resp_frequency_setpoint_rpm > 30.0){
+        resp_frequency_setpoint_rpm = 30.0;
+    }else{
+        // Does nothing
+    }
+
+    /* Calculate period */
     resp_period = 60.0 / resp_frequency_setpoint_rpm;
+
+    insp_ratio = 1;
+
+    if(exp_ratio < 2.0){
+        exp_ratio = 2.0;
+    }else if(exp_ratio > 3.0){
+        exp_ratio = 3.0;
+    }else{
+        // Does nothing
+    }
 
     /* Calculate inspiration and expiration time */
     inspiration_time_setpoint_s = (resp_period * insp_ratio) / (insp_ratio + exp_ratio);
     expiration_time_setpoint_s = (resp_period * exp_ratio) / (insp_ratio + exp_ratio);
+}
+
+
+void Flow_Setpoint_Update_From_Time(void){
+
     /* Calculate required flow */
     //__disable_irq();
-    //inspiration_flow_setpoint_slpm = 0.06 * (tidal_volume_setpoint_ml / inspiration_time_setpoint_s);
+    inspiration_flow_setpoint_slpm = 0.06 * (tidal_volume_setpoint_ml / inspiration_time_setpoint_s);
     //__enable_irq();
-
 }
 
 
@@ -599,7 +630,7 @@ uint16_t Insp_Needle_Valve_Flow_Percent_To_Steps(float percent){
         steps_value = INSPIRATION_NEEDLE_VALVE_CLOSE_GUARD_LIMIT;
     }
     //return insp_needle_valve_flow_percent_table[percent];
-    return uint16_t(steps_value * 2.5);
+    return (uint16_t)steps_value;
 
 }
 
@@ -632,7 +663,7 @@ uint16_t Insp_Needle_Valve_Pressure_Percent_To_Steps(float percent){
 
 
     //return insp_needle_valve_pressure_percent_table[percent];
-    return uint16_t(steps_value * 2.5);
+    return (uint16_t)steps_value;
 }
 
 
@@ -996,7 +1027,7 @@ uint16_t Exp_Ball_Valve_Flow_Percent_To_Steps(float percent){
     }
 
 
-    return (steps * 2.5);                                         
+    return (uint16_t)steps;                                         
 
 }
 

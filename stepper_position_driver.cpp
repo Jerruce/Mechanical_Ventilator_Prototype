@@ -150,7 +150,8 @@ void TIM1_TRG_COM_TIM11_IRQHandler_Auxiliar(void)
         }else if(motor1_step_counter < (m_SetPoint_1 - INSPIRATION_NEEDLE_VALVE_SPEED_SWITCH_THRESHOLD)){
             TIM11->PSC = 216 - 1;
         }else{
-            TIM11->PSC = 6912 - 1;
+            //TIM11->PSC = 6912 - 1;
+            TIM11->PSC = 864 - 1;
         }
 
 		if(motor1_step_counter  > m_SetPoint_1)
@@ -181,6 +182,8 @@ void TIM1_TRG_COM_TIM11_IRQHandler_Auxiliar(void)
 	}
 	else if(m_Driver1_CMD == DRIVER_CONTROL_DEC)
 	{
+        TIM11->PSC = 864 - 1;
+
 		GPIO_PIN_SetState(IO_DRIVE1_DIR_PORT, IO_DRIVE1_DIR_PIN, 0);
 		
 		if(GPIO_PIN_ReadState(IO_DRIVE1_IND_PORT, IO_DRIVE1_IND_PIN) == 1)	// inductivo detectado
@@ -188,6 +191,7 @@ void TIM1_TRG_COM_TIM11_IRQHandler_Auxiliar(void)
             GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 0);
             GPIO_PIN_SetState(IO_DRIVE1_BRAKE_PORT, IO_DRIVE1_BRAKE_PIN, 0);
 			m_Motor1_MinPos = 1;
+            motor1_step_counter = 0;
 		}
 		else
 		{
@@ -271,6 +275,10 @@ void TIM8_TRG_COM_TIM14_IRQHandler_Auxiliar(void)
 	}
 	else if(m_Driver2_CMD == DRIVER_CONTROL_DEC)
 	{
+
+        // Set speed for going home
+        TIM14->PSC = 432 - 1;
+
 		GPIO_PIN_SetState(IO_DRIVE2_DIR_PORT, IO_DRIVE2_DIR_PIN, 0);
 
         if(GPIO_PIN_ReadState(IO_DRIVE2_IND_PORT, IO_DRIVE2_IND_PIN) == 1)	// inductivo detectado
@@ -278,6 +286,7 @@ void TIM8_TRG_COM_TIM14_IRQHandler_Auxiliar(void)
 			GPIO_PIN_SetState(IO_DRIVE2_ENA_PORT, IO_DRIVE2_ENA_PIN, 0);
             GPIO_PIN_SetState(IO_DRIVE2_BRAKE_PORT, IO_DRIVE2_BRAKE_PIN, 0);
 			m_Motor2_MinPos = 1;
+            motor2_step_counter = 0;
 		}
 		else
 		{

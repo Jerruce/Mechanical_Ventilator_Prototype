@@ -22,10 +22,11 @@ static volatile int16_t exp_ball_valve_setpoint_in_steps = 0;
 /* Function definition*/
 
 void Electric_Valves_Initialize(void){
-    Inspiration_On_Off_Valve_Initialize();  
-    Inspiration_Needle_Valve_Initialize();
+     
     Expiration_Ball_Valve_Initialize();
-    thread_sleep_for(1000);
+    Inspiration_Needle_Valve_Initialize();
+    Inspiration_On_Off_Valve_Initialize(); 
+
 }
 
 // --------------------------------------------------------------------------------
@@ -51,8 +52,13 @@ void Inspiration_On_Off_Valve_Close(void){
 // --------------------------------------------------------------------------------
 
 void Inspiration_Needle_Valve_Initialize(void){
+
+    Motor1_Write_Setpoint(0);
+    Motor1_Write_Command(DRIVER_CONTROL_OFF);
     Motor1_Initialize();
-    Motor1_SetAsOrigen();  
+    Motor1_SetAsOrigen();
+    Motor1_Write_Command(DRIVER_CONTROL_ON);
+
 }
 
 
@@ -80,8 +86,13 @@ void Inspiration_Needle_Valve_Write_Step_Setpoint(uint16_t setpoint){
 
 void Inspiration_Needle_Valve_Go_To_Setpoint(void){
     Motor1_Write_Setpoint(insp_needle_valve_setpoint_in_steps);
+    Motor1_Write_Command(DRIVER_CONTROL_ON);
 }
 
+
+void Inspiration_Needle_Valve_Go_Home(void){
+    Motor1_Write_Command(DRIVER_CONTROL_DEC);
+}
 
 
 // --------------------------------------------------------------------------------
@@ -100,13 +111,17 @@ void Expiration_Ball_Valve_Write_Step_Setpoint(uint16_t setpoint){
 
 
 void Expiration_Ball_Valve_Initialize(void){
+    Motor2_Write_Setpoint(0);
+    Motor2_Write_Command(DRIVER_CONTROL_OFF);
     Motor2_Initialize();
     Motor2_SetAsOrigen();
+    Motor2_Write_Command(DRIVER_CONTROL_ON);
 }
 
 
 void Expiration_Ball_Valve_Go_To_Setpoint(void){
     Motor2_Write_Setpoint(exp_ball_valve_setpoint_in_steps);
+    Motor2_Write_Command(DRIVER_CONTROL_ON);
 }
 
 
@@ -119,4 +134,7 @@ void Expiration_Ball_Valve_Disable(void){
     Motor2_Write_Command(DRIVER_CONTROL_OFF);
 }
 
+void Expiration_Ball_Valve_Go_Home(void){
+    Motor2_Write_Command(DRIVER_CONTROL_DEC);
+}
 

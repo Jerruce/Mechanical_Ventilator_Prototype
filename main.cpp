@@ -155,24 +155,9 @@ void Task_Control(void)
 	
 	Mapeado();
 	IO_Initialize();
-	
-    Motor1_Write_Setpoint(0);
-    Motor2_Write_Setpoint(0);
-    Motor1_Write_Command(DRIVER_CONTROL_OFF);
-    Motor2_Write_Command(DRIVER_CONTROL_OFF);
+    Electric_Valves_Initialize();
+    system_flags |= (1 << VALVES_READY_FLAG);
 
-	// Inicializa Periferico
-	Motor1_Initialize();
-	Motor2_Initialize();
-	
-	// Establece posicion actual como punto de referencia
-	Motor1_SetAsOrigen();
-	Motor2_SetAsOrigen();
-
-    //Electric_Valves_Initialize();
-    
-    Motor1_Write_Command(DRIVER_CONTROL_ON);
-    Motor2_Write_Command(DRIVER_CONTROL_ON);
 
 	vButtonCurState = GPIO_PIN_ReadState(IO_BUTTON_PORT, IO_BUTTON_PIN);
 	vButtonLastState = vButtonCurState;
@@ -193,20 +178,6 @@ void Task_Control(void)
 		}
 		vButtonLastState = vButtonCurState;
 	
-		// Para probar control
-       // GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 0);
-      //  m_Driver1_CMD = DRIVER_CONTROL_ON;
-	/* 	if((vKeyLastState != vKeyState) && (vKeyState != 0))
-		{
-			m_Driver1_CMD++;
-			m_Driver2_CMD++;
-			
-			if(m_Driver1_CMD > DRIVER_CONTROL_ON)
-				m_Driver1_CMD = DRIVER_CONTROL_OFF;
-			
-			if(m_Driver2_CMD > DRIVER_CONTROL_ON)
-				m_Driver2_CMD = DRIVER_CONTROL_OFF;
-        }*/
 		
 		vKeyLastState = vKeyState;
 		
@@ -327,7 +298,7 @@ void Task_SensorRead(void){
         Apply_Pressure_LPF_Filter(presion);
         /* Read the filtered measurements */
         presion = Get_Pressure_LPF_Output();
-        flujo = Get_Flow_LPF_Output();
+        //flujo = Get_Flow_LPF_Output();
         //Apply_Flow_PID_LPF_Filter(flujo);
         //flujo_pid = Get_Flow_PID_LPF_Output();
         flujo_pid = Filtering_Kalman(&myFILTER, flujo);
@@ -379,11 +350,11 @@ void Task_SensorDisplay(void){
         //Signal2 = Get_Flow_PID_LPF_Output();
         //vEncoder = (int32_t)((TIM1->CNT) - (1 << 15))*10;
         //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(setpoint_recibido * 100), presion_entero);
-        //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(Breath_System_Get_Flow_Setpoint() * 100), flujo_entero);
+        sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(Breath_System_Get_Flow_Setpoint() * 100), flujo_entero);
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), flujo_entero,cambio_flujo);
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), presion_entero,cambio_presion);
         //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(setpoint_recibido), display_posicion - 32700);
-        sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(m_SetPoint_1), display_posicion);
+        //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(m_SetPoint_1), display_posicion);
         //sprintf(buffer_sensores, "%d\r\n", flujo_entero);
         //sprintf(buffer_sensores, "%d,%d,%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), flujo_entero, m_SetPoint_1 * 10,
        //                  vEncoder,
@@ -508,29 +479,34 @@ void Task_Pruebita(void){
     //wait(1);
 
     while(1){
-         
+
+        while(!(system_flags & (1 << VALVES_READY_FLAG))){
+            //Does nothing
+        }
+
+
          if(system_flags & (1 << COMMAND_RECEIVED_DATA_FLAG)){                      
-            //Inspiration_Flow_PID_Controller_Set_Kp(kp_recibido);
+            Inspiration_Flow_PID_Controller_Set_Kp(kp_recibido);
+            Flow_Fuzzy_Inc_Controller_Set_GE(kp_recibido);
             //PIP_PID_Controller_Set_Kp(kp_recibido);
-            //Flow_Fuzzy_Inc_Controller_Set_GE(kp_recibido);
-            //Inspiration_Flow_PID_Controller_Set_Ki(ki_recibido);
+            Inspiration_Flow_PID_Controller_Set_Ki(ki_recibido);
+            Flow_Fuzzy_Inc_Controller_Set_GCU(ki_recibido);
             //PIP_PID_Controller_Set_Ki(ki_recibido);
-            //Flow_Fuzzy_Inc_Controller_Set_GCU(ki_recibido);
-            //Inspiration_Flow_PID_Controller_Set_Kd(kd_recibido);
+            Inspiration_Flow_PID_Controller_Set_Kd(kd_recibido);
+            Flow_Fuzzy_Inc_Controller_Set_GCE(kd_recibido);
             //PIP_PID_Controller_Set_Kd(kd_recibido);
-            //Flow_Fuzzy_Inc_Controller_Set_GCE(kd_recibido);
-            //Flow_Setpoint_Update((uint8_t)setpoint_recibido);
+            Flow_Setpoint_Update((uint8_t)setpoint_recibido);
             //PEEP_Setpoint_Update((uint8_t)setpoint_recibido);
             //PIP_Setpoint_Update((uint8_t)setpoint_recibido);
             //Inspiration_Needle_Valve_Write_Step_Setpoint(setpoint_recibido);
             //Inspiration_Needle_Valve_Go_To_Setpoint();
             //Expiration_Ball_Valve_Write_Step_Setpoint(setpoint_recibido);
             //Expiration_Ball_Valve_Go_To_Setpoint();
-            Motor1_Write_Setpoint((int16_t)setpoint_recibido);
+            //Motor1_Write_Setpoint((int16_t)setpoint_recibido);
             system_flags &= ~(1 << COMMAND_RECEIVED_DATA_FLAG);
        }
         
-        //VC_CMV_State_Machine();//PC_CMV_State_Machine();//Breath_State_Machine();
+        VC_CMV_State_Machine();//PC_CMV_State_Machine();//Breath_State_Machine();
         //ALARM_BUZZER_ON();
         //Alarm_Buzzer_Update();
         osDelay(1);

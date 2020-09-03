@@ -50,6 +50,9 @@ void Tidal_Volume_Setpoint_Update(uint16_t vol_val);
 void PIP_Setpoint_Update(uint8_t pip_val);
 void PEEP_Setpoint_Update(uint8_t peep_val);
 void Flow_Setpoint_Update(uint8_t flow_val);
+void Time_Setpoint_Update(void);
+void Flow_Setpoint_Update_From_Time(void);
+
 void Time_And_Flow_Setpoint_Update(void);
 void Breath_System_Set_Mode(Breath_Mode_t mode);
 void Flow_PID_Tune(void);
