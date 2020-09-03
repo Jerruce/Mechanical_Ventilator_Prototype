@@ -164,8 +164,9 @@
 
 // ----------------------- Defines for fuzzy controllers -------------------------
 
-#define FUZZY_PD_FLOW_MAX_ERROR         30
-#define FUZZY_PD_FLOW_MAX_DELTA_ERROR   30
+#define FUZZY_PD_FLOW_MAX_ERROR             30
+#define FUZZY_PD_FLOW_MAX_DELTA_ERROR       30
+#define FUZZY_CONTROLLER_SAMPLE_PERIOD_S    0.05
 
 
 // ---------------------- Defines for the oxygen sensor ------------------------
