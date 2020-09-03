@@ -177,8 +177,8 @@ void VC_CMV_State_Machine(void){
                 // Open inspiration solenoid valve
                 Inspiration_On_Off_Valve_Open();
                 // Close completely the expiration needle valve
-                Expiration_Ball_Valve_Go_Home();
-                
+                Expiration_Ball_Valve_Write_Step_Setpoint(0);
+                Expiration_Ball_Valve_Go_To_Setpoint();
                 
                 // Reset flow and PEEP controllers
                 //Inspiration_Flow_PID_Controller(0.0, 0.0, 1);
@@ -226,7 +226,6 @@ void VC_CMV_State_Machine(void){
 
             Inspiration_On_Off_Valve_Close();
 
-            Inspiration_Needle_Valve_Go_Home();
             //Inspiration_Needle_Valve_Write_Step_Setpoint(0);
             //Inspiration_Needle_Valve_Go_To_Setpoint();
 

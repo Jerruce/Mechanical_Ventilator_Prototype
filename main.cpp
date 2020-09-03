@@ -407,6 +407,7 @@ void Task_SensorDisplay(void){
  
 
         if(conta_10ms >= 10){
+            //conta_10ms = 0;
             conta_10ms = 0;
 
             flow_peak = Breath_System_Get_Flow_Indicator_Value(); 
