@@ -629,7 +629,7 @@ uint16_t Insp_Needle_Valve_Flow_Percent_To_Steps(float percent){
         steps_value = INSPIRATION_NEEDLE_VALVE_CLOSE_GUARD_LIMIT;
     }
     //return insp_needle_valve_flow_percent_table[percent];
-    return (uint16_t)steps_value;
+    return (uint16_t)(steps_value * 2.5);
 
 }
 
@@ -662,7 +662,7 @@ uint16_t Insp_Needle_Valve_Pressure_Percent_To_Steps(float percent){
 
 
     //return insp_needle_valve_pressure_percent_table[percent];
-    return (uint16_t)steps_value;
+    return (uint16_t)(steps_value * 2.5);
 }
 
 
@@ -1025,8 +1025,7 @@ uint16_t Exp_Ball_Valve_Flow_Percent_To_Steps(float percent){
         //Does nothing
     }
 
-
-    return (uint16_t)steps;                                         
+    return (uint16_t)(steps * 2.5);                                         
 
 }
 

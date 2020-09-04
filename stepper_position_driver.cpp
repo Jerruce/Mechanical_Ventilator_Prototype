@@ -2,23 +2,24 @@
 
 /* File inclusion */
 #include "mbed.h"
+#include "project_defines.h"
 #include "Driver_GPIO.h"
 #include "stepper_position_driver.h"
 
 
 /* Variable definition */
 
-extern int posicion_actual_insp; // just for testing
-extern int posicion_actual_exp; // just for testing
+extern volatile  int posicion_actual_insp; // just for testing
+extern volatile int posicion_actual_exp; // just for testing
 
-int m_SetPoint_1;
-int m_SetPoint_2;
+volatile int m_SetPoint_1;
+volatile int m_SetPoint_2;
 
-int m_Driver1_CMD;
-int m_Driver2_CMD;
+volatile int m_Driver1_CMD;
+volatile int m_Driver2_CMD;
 
-int m_Motor1_MinPos;
-int m_Motor2_MinPos;
+volatile int m_Motor1_MinPos;
+volatile int m_Motor2_MinPos;
 
 
 /* Function declaration */
@@ -201,22 +202,22 @@ void TIM1_TRG_COM_TIM11_IRQHandler_Auxiliar(void)
 
 	if(m_Driver1_CMD == DRIVER_CONTROL_ON)
 	{
-        if(TIM1->CNT > ((1 << 15) + m_SetPoint_1 + 100)){
+        if(TIM1->CNT > ((1 << 15) + m_SetPoint_1 + INSPIRATION_NEEDLE_VALVE_SPEED_SWITCH_THRESHOLD)){
             TIM11->PSC = 216 - 1;
-        }else if(TIM1->CNT < ((1 << 15) + m_SetPoint_1 - 100)){
+        }else if(TIM1->CNT < ((1 << 15) + m_SetPoint_1 - INSPIRATION_NEEDLE_VALVE_SPEED_SWITCH_THRESHOLD)){
             TIM11->PSC = 216 - 1;
         }else{
-            TIM11->PSC = 6912 - 1;
+            TIM11->PSC = 864 - 1;
         }
 
-		if(TIM1->CNT > ((1 << 15) + m_SetPoint_1 + 20))
+		if(TIM1->CNT > ((1 << 15) + m_SetPoint_1 + INSPIRATION_NEEDLE_VALVE_POSITION_TOLERANCE))
 		{
 			// Cambiar de direccion antihorario
 			GPIO_PIN_SetState(IO_DRIVE1_DIR_PORT, IO_DRIVE1_DIR_PIN, 0);
 			GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 0);
             GPIO_PIN_SetState(IO_DRIVE1_BRAKE_PORT, IO_DRIVE1_BRAKE_PIN, 1);
 		}
-		else if(TIM1->CNT < ((1 << 15) + m_SetPoint_1 - 20))
+		else if(TIM1->CNT < ((1 << 15) + m_SetPoint_1 - INSPIRATION_NEEDLE_VALVE_POSITION_TOLERANCE))
 		{
 			// Cambiar de direccion horario
 			GPIO_PIN_SetState(IO_DRIVE1_DIR_PORT, IO_DRIVE1_DIR_PIN, 1);
@@ -233,19 +234,24 @@ void TIM1_TRG_COM_TIM11_IRQHandler_Auxiliar(void)
 	{
 		GPIO_PIN_SetState(IO_DRIVE1_DIR_PORT, IO_DRIVE1_DIR_PIN, 1);
 		GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 0);
+        GPIO_PIN_SetState(IO_DRIVE1_BRAKE_PORT, IO_DRIVE1_BRAKE_PIN, 1);
 	}
 	else if(m_Driver1_CMD == DRIVER_CONTROL_DEC)
 	{
+        TIM11->PSC = 6912 - 1;
 		GPIO_PIN_SetState(IO_DRIVE1_DIR_PORT, IO_DRIVE1_DIR_PIN, 0);
+        GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 0);
 		
 		if(GPIO_PIN_ReadState(IO_DRIVE1_IND_PORT, IO_DRIVE1_IND_PIN) == 1)	// inductivo detectado
 		{
-			GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 1);
+            GPIO_PIN_SetState(IO_DRIVE1_BRAKE_PORT, IO_DRIVE1_BRAKE_PIN, 0);
+			GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 0);
 			m_Motor1_MinPos = 1;
 		}
 		else
 		{
 			GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 0);
+            GPIO_PIN_SetState(IO_DRIVE1_BRAKE_PORT, IO_DRIVE1_BRAKE_PIN, 1);
 			m_Motor1_MinPos = 0;
 		}
 	}
@@ -253,6 +259,7 @@ void TIM1_TRG_COM_TIM11_IRQHandler_Auxiliar(void)
 	{
 		GPIO_PIN_SetState(IO_DRIVE1_DIR_PORT, IO_DRIVE1_DIR_PIN, 0);
 		GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 1);
+         GPIO_PIN_SetState(IO_DRIVE1_BRAKE_PORT, IO_DRIVE1_BRAKE_PIN, 0);
 	}
     else {
         GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 1);
@@ -267,34 +274,31 @@ void TIM8_TRG_COM_TIM14_IRQHandler_Auxiliar(void)
 	if(m_Driver2_CMD == DRIVER_CONTROL_ON)
 	{
 
-        if(TIM8->CNT > ((1 << 15) + m_SetPoint_2 + 100)){
+        if(TIM8->CNT > ((1 << 15) + m_SetPoint_2 + EXPIRATION_BALL_VALVE_SPEED_SWITCH_THRESHOLD)){
             TIM14->PSC = 108 - 1;
-        }else if(TIM8->CNT < ((1 << 15) + m_SetPoint_2 - 100)){
+        }else if(TIM8->CNT < ((1 << 15) + m_SetPoint_2 - EXPIRATION_BALL_VALVE_SPEED_SWITCH_THRESHOLD)){
             TIM14->PSC = 108 - 1;
         }else{
             TIM14->PSC = 432 - 1;
         }
 
-		if(TIM8->CNT > ((1 << 15) + m_SetPoint_2 + 20))
+		if(TIM8->CNT > ((1 << 15) + m_SetPoint_2 + EXPIRATION_BALL_VALVE_POSITION_TOLERANCE))
 		{
 		// Cambiar de direccion antihorario
 			GPIO_PIN_SetState(IO_DRIVE2_DIR_PORT, IO_DRIVE2_DIR_PIN, 0);
 			GPIO_PIN_SetState(IO_DRIVE2_ENA_PORT, IO_DRIVE2_ENA_PIN, 0);
-            //GPIO_PIN_SetState(IO_DRIVE2_ENA_PORT, IO_DRIVE2_ENA_PIN, 1);
             GPIO_PIN_SetState(IO_DRIVE2_BRAKE_PORT, IO_DRIVE2_BRAKE_PIN, 1);
 		}
-		else if(TIM8->CNT < ((1 << 15) + m_SetPoint_2 - 20))
+		else if(TIM8->CNT < ((1 << 15) + m_SetPoint_2 - EXPIRATION_BALL_VALVE_POSITION_TOLERANCE))
 		{
 			// Cambiar de direccion horario
 			GPIO_PIN_SetState(IO_DRIVE2_DIR_PORT, IO_DRIVE2_DIR_PIN, 1);
 			GPIO_PIN_SetState(IO_DRIVE2_ENA_PORT, IO_DRIVE2_ENA_PIN, 0);
-            //GPIO_PIN_SetState(IO_DRIVE2_ENA_PORT, IO_DRIVE2_ENA_PIN, 1);
             GPIO_PIN_SetState(IO_DRIVE2_BRAKE_PORT, IO_DRIVE2_BRAKE_PIN, 1);
 		}
 		else
 		{
 			GPIO_PIN_SetState(IO_DRIVE2_ENA_PORT, IO_DRIVE2_ENA_PIN, 0);
-            //GPIO_PIN_SetState(IO_DRIVE2_ENA_PORT, IO_DRIVE2_ENA_PIN, 1);
             GPIO_PIN_SetState(IO_DRIVE2_BRAKE_PORT, IO_DRIVE2_BRAKE_PIN, 0);
 		}
 	}
@@ -306,11 +310,13 @@ void TIM8_TRG_COM_TIM14_IRQHandler_Auxiliar(void)
 	}
 	else if(m_Driver2_CMD == DRIVER_CONTROL_DEC)
 	{
+
+        TIM14->PSC = 432 - 1;
 		GPIO_PIN_SetState(IO_DRIVE2_DIR_PORT, IO_DRIVE2_DIR_PIN, 0);
 
         if(GPIO_PIN_ReadState(IO_DRIVE2_IND_PORT, IO_DRIVE2_IND_PIN) == 1)	// inductivo detectado
 		{
-			GPIO_PIN_SetState(IO_DRIVE2_ENA_PORT, IO_DRIVE2_ENA_PIN, 1);
+			GPIO_PIN_SetState(IO_DRIVE2_ENA_PORT, IO_DRIVE2_ENA_PIN, 0);
             GPIO_PIN_SetState(IO_DRIVE2_BRAKE_PORT, IO_DRIVE2_BRAKE_PIN, 0);
 			m_Motor2_MinPos = 1;
 		}
