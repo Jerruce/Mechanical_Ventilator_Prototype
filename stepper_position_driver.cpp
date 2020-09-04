@@ -207,8 +207,12 @@ void TIM1_TRG_COM_TIM11_IRQHandler_Auxiliar(void)
         }else if(TIM1->CNT < ((1 << 15) + m_SetPoint_1 - INSPIRATION_NEEDLE_VALVE_SPEED_SWITCH_THRESHOLD)){
             TIM11->PSC = 216 - 1;
         }else{
+<<<<<<< HEAD
             //TIM11->PSC = 864 - 1;
             TIM11->PSC = 3456 - 1;
+=======
+            TIM11->PSC = 864 - 1;
+>>>>>>> 8ea568cd746a7ed79f1940cfe9675097fbdaa071
         }
 
 		if(TIM1->CNT > ((1 << 15) + m_SetPoint_1 + INSPIRATION_NEEDLE_VALVE_POSITION_TOLERANCE))
@@ -241,6 +245,7 @@ void TIM1_TRG_COM_TIM11_IRQHandler_Auxiliar(void)
 	{
         TIM11->PSC = 6912 - 1;
 		GPIO_PIN_SetState(IO_DRIVE1_DIR_PORT, IO_DRIVE1_DIR_PIN, 0);
+        GPIO_PIN_SetState(IO_DRIVE1_ENA_PORT, IO_DRIVE1_ENA_PIN, 0);
 		
 		if(GPIO_PIN_ReadState(IO_DRIVE1_IND_PORT, IO_DRIVE1_IND_PIN) == 1)	// inductivo detectado
 		{
@@ -311,7 +316,11 @@ void TIM8_TRG_COM_TIM14_IRQHandler_Auxiliar(void)
 	else if(m_Driver2_CMD == DRIVER_CONTROL_DEC)
 	{
 
+<<<<<<< HEAD
         TIM14->PSC = 3456 - 1;
+=======
+        TIM14->PSC = 432 - 1;
+>>>>>>> 8ea568cd746a7ed79f1940cfe9675097fbdaa071
 		GPIO_PIN_SetState(IO_DRIVE2_DIR_PORT, IO_DRIVE2_DIR_PIN, 0);
 
         if(GPIO_PIN_ReadState(IO_DRIVE2_IND_PORT, IO_DRIVE2_IND_PIN) == 1)	// inductivo detectado

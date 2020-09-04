@@ -362,7 +362,10 @@ void Task_SensorDisplay(void){
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), presion_entero,cambio_presion);
         //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(setpoint_recibido), display_posicion - 32700);
         //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(m_SetPoint_1), display_posicion - 32768);
+<<<<<<< HEAD
         //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(m_SetPoint_2), display_posicion - 32768);
+=======
+>>>>>>> 8ea568cd746a7ed79f1940cfe9675097fbdaa071
         //sprintf(buffer_sensores, "%d\r\n", flujo_entero);
         //sprintf(buffer_sensores, "%d,%d,%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), flujo_entero, m_SetPoint_1 * 10,
        //                  vEncoder,
