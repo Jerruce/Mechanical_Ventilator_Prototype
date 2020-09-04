@@ -44,6 +44,7 @@ volatile float frec_resp_sp=20.0,  t_exp_sp=2.0, volumen_tidal_sp=200, peep_sp=0
 static float Volumen_peak, flow_peak, pressure_peak;
 volatile float valor_volumen_promedio, valor_error_volumen;
 
+volatile uint8_t renovar_setpoint = 0; 
 
 KALMAN_PARAM myFILTER;
 
@@ -259,6 +260,7 @@ void Task_TCPServer(void)
                 factor = 1.0;
                 fracc = 0,
                 system_flags |= (1 << COMMAND_RECEIVED_DATA_FLAG);
+                renovar_setpoint = 1;
             }else{
                 if(fracc){
                     factor /= 10.0;
@@ -304,6 +306,7 @@ void Task_SensorRead(void){
         //Apply_Flow_PID_LPF_Filter(flujo);
         //flujo_pid = Get_Flow_PID_LPF_Output();
         flujo_pid = Filtering_Kalman(&myFILTER, flujo);
+        flujo= flujo_pid;
         Proximal_Flow_Sensor_Calculate_Volume(flujo);
         volumen = Proximal_Flow_Sensor_Get_Volume();
         //flujo = vContador++;
@@ -333,14 +336,15 @@ void Task_SensorDisplay(void){
     int vEncoder =0;
     
     float Signal2 =0;
-    Kalman_init(&myFILTER);
+    Kalman_init(&myFILTER);//
 
     while(1){
         //display_posicion = posicion_actual_insp;
         display_posicion = posicion_actual_exp;        presion_entero = (int32_t)(presion * 100.00);
         //sprintf(buffer_sensores, "presion = %d\n\r", presion_entero);
        // UART3_SendString((uint8_t *)buffer_sensores); while(UART3_TxLevel() > 0) osDelay(1); osDelay(1);
-        flujo_entero = (int32_t)(flujo * 100);
+        flujo_entero = (int32_t)(flujo_pid * 100);
+        presion_entero = (int32_t)(presion * 100);
         //sprintf(buffer_sensores, "flujo = %d\n\n\r", flujo_entero);
           /* Imprime flujo medido y setpoint (todo multiplicado por 100) en el serial plotter */
         //flujo_entero = (int32_t)(flujo_pid*100.00);
@@ -353,6 +357,7 @@ void Task_SensorDisplay(void){
         //vEncoder = (int32_t)((TIM1->CNT) - (1 << 15))*10;
         //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(setpoint_recibido * 100), presion_entero);
         sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(Breath_System_Get_Flow_Setpoint() * 100), flujo_entero);
+        //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(Breath_System_Get_PIP_Setpoint()*100), presion_entero);
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), flujo_entero,cambio_flujo);
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), presion_entero,cambio_presion);
         //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(setpoint_recibido), display_posicion - 32700);
@@ -492,14 +497,21 @@ void Task_Pruebita(void){
          if(system_flags & (1 << COMMAND_RECEIVED_DATA_FLAG)){                      
             //Inspiration_Flow_PID_Controller_Set_Kp(kp_recibido);
             Flow_Fuzzy_Inc_Controller_Set_GE(kp_recibido);
+            //PIP_Fuzzy_Inc_Controller_Set_GE(kp_recibido);
             //PIP_PID_Controller_Set_Kp(kp_recibido);
             //Inspiration_Flow_PID_Controller_Set_Ki(ki_recibido);
             Flow_Fuzzy_Inc_Controller_Set_GCU(ki_recibido);
+            //PIP_Fuzzy_Inc_Controller_Set_GCU(ki_recibido);
             //PIP_PID_Controller_Set_Ki(ki_recibido);
             //Inspiration_Flow_PID_Controller_Set_Kd(kd_recibido);
             Flow_Fuzzy_Inc_Controller_Set_GCE(kd_recibido);
+            //PIP_Fuzzy_Inc_Controller_Set_GCE(kd_recibido);
             //PIP_PID_Controller_Set_Kd(kd_recibido);
-            Flow_Setpoint_Update((uint8_t)setpoint_recibido);
+            if(renovar_setpoint){
+                Flow_Setpoint_Update((uint8_t)setpoint_recibido);
+                renovar_setpoint = 0;
+            }
+            
             //PEEP_Setpoint_Update((uint8_t)setpoint_recibido);
             //PIP_Setpoint_Update((uint8_t)setpoint_recibido);
             //Inspiration_Needle_Valve_Write_Step_Setpoint(setpoint_recibido);

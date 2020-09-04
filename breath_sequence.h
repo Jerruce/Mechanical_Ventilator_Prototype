@@ -67,6 +67,7 @@ float Breath_System_Get_Pressure_Indicator_Value(void);
 float Breath_System_Get_Resp_Frequency_Setpoint(void);
 float Breath_System_Get_Volume_Setpoint(void);
 float Breath_System_Get_Flow_Setpoint(void);
+float Breath_System_Get_PIP_Setpoint(void);
 Breath_Mode_t Breath_System_Get_Mode(void);
 Breath_Phase_t Breath_System_Get_Phase(void);
 

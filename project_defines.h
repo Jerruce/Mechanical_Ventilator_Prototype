@@ -144,7 +144,7 @@
 
 #define PRESSURE_01_LPF_N                               4
 #define PRESSURE_02_LPF_N                               3
-#define FLOW_LPF_N                                      25
+#define FLOW_LPF_N                                      4
 
 #define FLOW_PID_LPF_N                                  50
 

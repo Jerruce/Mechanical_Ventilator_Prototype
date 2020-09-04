@@ -15,9 +15,8 @@ static float flow_pid_lpf_output = 0;
 
 void Filters_Initialize(void){
 
-    Water_Column_Pressure_Cheby2_LPF(0.0, 1);
     Proximal_Pressure_Cheby2_LPF(0.0, 1);
-    Proximal_Flow_FIR_LPF(0.0, 1);
+    Proximal_Flow_Cheby2_LPF(0.0, 1);
     Flow_PID_FIR_LPF(0.0, 1);
 }
 
@@ -59,64 +58,25 @@ float Proximal_Pressure_Cheby2_LPF(float raw_value, uint8_t restart){
 
 
 
-float Proximal_Flow_FIR_LPF(float raw_value, uint8_t restart){
-
-    const float b[FLOW_LPF_N] = {-0.00204445,   0.00170497,  -0.00013853,  -0.00430077,   0.01165634,
-                                 -0.01836386,   0.01729751,  -0.00064490,  -0.03547909,   0.08723292,
-                                 -0.14261912,   0.18533572,  0.80072653,    0.18533572,  -0.14261912,
-                                  0.08723292,  -0.03547909,  -0.00064490,   0.01729751,  -0.01836386,
-                                  0.01165634,  -0.00430077,  -0.00013853,   0.00170497,  -0.00204445
-                                 };
-                                 
-    static float x[FLOW_LPF_N];
-    float y; 
-        
-    int16_t i; 
+float Proximal_Flow_Cheby2_LPF(float raw_value, uint8_t restart){
     
-     if(restart){
-        for(i = 0; i < FLOW_LPF_N; i++){
-           x[i] = 0.0; 
-        }
-    }else{
-        
-        /* Update recorded input values */
-        for(i = FLOW_LPF_N - 1; i > 0; i--){
-           x[i] = x[i - 1]; 
-        }
+   const float b[FLOW_LPF_N] = {0.0585,   0.0382,   0.0382,   0.0585};                        
+   const float a[FLOW_LPF_N] = {1.0000000,  -1.6511,   1.0893,   -0.2447};
    
-        /* Update current input and output values */
-        x[0] = raw_value;
-        y = 0;
-        for(i = 0; i < FLOW_LPF_N; i++){
-           y += (b[i] * x[i]); 
-        } 
-        
-    }
-
-    return y;     
-}
-
-
-float Water_Column_Pressure_Cheby2_LPF(float raw_value, uint8_t restart){
-    
-   const float b[PRESSURE_02_LPF_N] = {0.031339,  -0.062430,   0.031339};                        
-   const float a[PRESSURE_02_LPF_N] = {1.00000,  -1.97800,   0.97824};
+   static float x[FLOW_LPF_N];
+   static float y[FLOW_LPF_N];
    
-   static float x[PRESSURE_02_LPF_N];
-   static float y[PRESSURE_02_LPF_N];
-   
-
    int16_t i;  
 
     if(restart){
-        for(i = 0; i < PRESSURE_02_LPF_N; i++){
+        for(i = 0; i < FLOW_LPF_N; i++){
            x[i] = 0.0; 
            y[i] = 0.0; 
         }
     }else{
         
         /* Update recorded input and output values */
-        for(i = PRESSURE_02_LPF_N - 1; i > 0; i--){
+        for(i = FLOW_LPF_N - 1; i > 0; i--){
            x[i] = x[i - 1]; 
            y[i] = y[i - 1]; 
         }
@@ -124,7 +84,7 @@ float Water_Column_Pressure_Cheby2_LPF(float raw_value, uint8_t restart){
         /* Update current input and output values */
         x[0] = raw_value;
         y[0] = b[0] * x[0];
-        for(i = 1; i < PRESSURE_02_LPF_N; i++){
+        for(i = 1; i < FLOW_LPF_N; i++){
            y[0] += (b[i] * x[i]) - (a[i] * y[i]); 
         } 
         
@@ -132,6 +92,9 @@ float Water_Column_Pressure_Cheby2_LPF(float raw_value, uint8_t restart){
 
     return y[0];
 }
+
+
+
 
 
 
@@ -203,11 +166,7 @@ void Apply_Pressure_LPF_Filter(float pressure_signal){
 }
 
 void Apply_Flow_LPF_Filter(float flow_signal){
-    flow_lpf_output = Proximal_Flow_FIR_LPF(flow_signal, 0);
-}
-
-void Apply_Water_Column_Pressure_LPF(float column_pressure_signal){
-    water_column_lpf_output = Water_Column_Pressure_Cheby2_LPF(column_pressure_signal, 0);
+    flow_lpf_output = Proximal_Flow_Cheby2_LPF(flow_signal, 0);
 }
 
 
@@ -218,10 +177,6 @@ float Get_Pressure_LPF_Output(void){
 
 float Get_Flow_LPF_Output(void){
     return  flow_lpf_output;
-}
-
-float Get_Water_Column_Pressure_LPF_Output(void){
-    return water_column_lpf_output;
 }
 
 

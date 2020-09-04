@@ -133,12 +133,12 @@ float PIP_Fuzzy_Incremental_Controller(float control_setpoint, float control_fee
 
         error_change = (error[0] - error[1]) / FUZZY_CONTROLLER_SAMPLE_PERIOD_S;
 
-        fuzzy_error = flow_inc_control_ge * error[0];
-        fuzzy_error_change = flow_inc_control_gce * error_change;
+        fuzzy_error = pip_inc_control_ge * error[0];
+        fuzzy_error_change = pip_inc_control_gce * error_change;
 
         fuzzy_output[1] = fuzzy_output[0];
-        Flow_Fuzzy_Linear_PD_Controller(fuzzy_error, fuzzy_error_change, &fuzzy_output[0]);
-        fuzzy_output[0] *= flow_inc_control_gcu;
+        PIP_Fuzzy_Linear_PD_Controller(fuzzy_error, fuzzy_error_change, &fuzzy_output[0]);
+        fuzzy_output[0] *= pip_inc_control_gcu;
 
         delta_area = FUZZY_CONTROLLER_SAMPLE_PERIOD_S * (fuzzy_output[0] + fuzzy_output[1]) / 2.0;
         controller_output += delta_area;
