@@ -155,7 +155,9 @@ void Task_Control(void)
 	
 	Mapeado();
 	IO_Initialize();
+    GPIO_PIN_SetState(IO_LED_PORT, IO_LED_PIN, 1);
     Electric_Valves_Initialize();
+    GPIO_PIN_SetState(IO_LED_PORT, IO_LED_PIN, 0);
     system_flags |= (1 << VALVES_READY_FLAG);
 
 
@@ -334,8 +336,8 @@ void Task_SensorDisplay(void){
     Kalman_init(&myFILTER);
 
     while(1){
-        display_posicion = posicion_actual_insp;
-        //display_posicion = posicion_actual_exp;        presion_entero = (int32_t)(presion * 100.00);
+        //display_posicion = posicion_actual_insp;
+        display_posicion = posicion_actual_exp;        presion_entero = (int32_t)(presion * 100.00);
         //sprintf(buffer_sensores, "presion = %d\n\r", presion_entero);
        // UART3_SendString((uint8_t *)buffer_sensores); while(UART3_TxLevel() > 0) osDelay(1); osDelay(1);
         flujo_entero = (int32_t)(flujo * 100);
@@ -354,7 +356,8 @@ void Task_SensorDisplay(void){
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), flujo_entero,cambio_flujo);
         //sprintf(buffer_sensores, "%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), presion_entero,cambio_presion);
         //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(setpoint_recibido), display_posicion - 32700);
-        //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(m_SetPoint_1), display_posicion);
+        //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(m_SetPoint_1), display_posicion - 32768);
+        //sprintf(buffer_sensores, "%d,%d\r\n", (int32_t)(m_SetPoint_2), display_posicion - 32768);
         //sprintf(buffer_sensores, "%d\r\n", flujo_entero);
         //sprintf(buffer_sensores, "%d,%d,%d,%d,%d\r\n", (int32_t)(setpoint_recibido * 100), flujo_entero, m_SetPoint_1 * 10,
        //                  vEncoder,
@@ -487,13 +490,13 @@ void Task_Pruebita(void){
 
 
          if(system_flags & (1 << COMMAND_RECEIVED_DATA_FLAG)){                      
-            Inspiration_Flow_PID_Controller_Set_Kp(kp_recibido);
+            //Inspiration_Flow_PID_Controller_Set_Kp(kp_recibido);
             Flow_Fuzzy_Inc_Controller_Set_GE(kp_recibido);
             //PIP_PID_Controller_Set_Kp(kp_recibido);
-            Inspiration_Flow_PID_Controller_Set_Ki(ki_recibido);
+            //Inspiration_Flow_PID_Controller_Set_Ki(ki_recibido);
             Flow_Fuzzy_Inc_Controller_Set_GCU(ki_recibido);
             //PIP_PID_Controller_Set_Ki(ki_recibido);
-            Inspiration_Flow_PID_Controller_Set_Kd(kd_recibido);
+            //Inspiration_Flow_PID_Controller_Set_Kd(kd_recibido);
             Flow_Fuzzy_Inc_Controller_Set_GCE(kd_recibido);
             //PIP_PID_Controller_Set_Kd(kd_recibido);
             Flow_Setpoint_Update((uint8_t)setpoint_recibido);
@@ -507,7 +510,7 @@ void Task_Pruebita(void){
             system_flags &= ~(1 << COMMAND_RECEIVED_DATA_FLAG);
        }
         
-        VC_CMV_State_Machine();//PC_CMV_State_Machine();//Breath_State_Machine();
+       VC_CMV_State_Machine();//PC_CMV_State_Machine();//Breath_State_Machine();
         //ALARM_BUZZER_ON();
         //Alarm_Buzzer_Update();
         osDelay(1);

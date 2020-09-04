@@ -59,6 +59,9 @@ void Proximal_Flow_Sensor_Read(){
     sensor_read_data_buffer[1] = 0;
     sensor_read_data_buffer[2] = 0;
 
+
+    /* Send command for continuous reading mode */
+    i2c_error = Proximal_Flow_Sensor_Send_Command(SENSIRION_START_FLOW_MEASUREMENT);
     /* Read the flow sensor */
     i2c_error = proximal_flow_sensor.read(PROXIMAL_FLOW_SENSOR_SRA, sensor_read_data_buffer, 3); 
     
